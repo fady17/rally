@@ -1,0 +1,44 @@
+@* File: Rally/Pages/Shared/_ScopeListItem.cshtml *@
+@* Choose ONE of the following @model lines based on where you put ScopeViewModel.cs *@
+
+@* @model Rally.Pages.Consent.ScopeViewModel *@ @* Use this if ScopeViewModel is in Pages/Consent *@
+@model Rally.Pages.ScopeViewModel
+
+
+<li class="list-group-item">
+    <label>
+        @* Use a unique ID for the input and associate label using 'for' *@
+        <input class="form-check-input me-1"
+               type="checkbox"
+               name="Input.ScopesConsented"
+               id="scopes_@Model.Value?.Replace('.', '_')" @* Ensure valid ID if scope name has dots *@
+               value="@Model.Value"
+               checked="@Model.Checked"
+               disabled="@Model.Required" />
+
+        @* Hidden input ensures required scopes are always submitted even if disabled checkbox isn't *@
+        @if (Model.Required)
+        {
+            <input type="hidden"
+                   name="Input.ScopesConsented"
+                   value="@Model.Value" />
+        }
+
+        @* Use the label's 'for' attribute to link to the checkbox *@
+        <label class="form-check-label" for="scopes_@Model.Value?.Replace('.', '_')">
+            <strong>@Model.DisplayName</strong>
+            @if (Model.Emphasize)
+            {
+                <span class="glyphicon glyphicon-exclamation-sign"></span> @* Consider using a Bootstrap icon class if available e.g., <i class="bi bi-exclamation-circle-fill"></i> *@
+            }
+        </label>
+    </label>
+
+    @* Display the description if provided *@
+    @if (Model.Description != null)
+    {
+        <div class="consent-description ps-4"> @* Add some padding for visual hierarchy *@
+             <small>@Model.Description</small>
+        </div>
+    }
+</li>

@@ -1,0 +1,79 @@
+@page "/consent"
+@model Rally.Pages.Consent.IndexModel
+
+<div class="consent-page">
+    <div class="lead">
+        <h1>Consent</h1>
+        <p>@Model.View.ClientName would like to access your account.</p>
+    </div>
+
+    <partial name="_ValidationSummary" />
+
+    <div class="row">
+        <div class="col-sm-8">
+            <form asp-page="/Consent/Index" method="post">
+                <input type="hidden" asp-for="Input.ReturnUrl" />
+
+                @if (Model.View.IdentityScopes?.Any() == true)
+                {
+                    <div class="form-group">
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="glyphicon glyphicon-user"></span>
+                                Personal Information
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                @foreach (var scope in Model.View.IdentityScopes)
+                                {
+                                    <partial name="_ScopeListItem" model="scope" />
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.View.ApiScopes?.Any() == true)
+                {
+                    <div class="form-group">
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="glyphicon glyphicon-tasks"></span>
+                                Application Access
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                @foreach (var scope in Model.View.ApiScopes)
+                                {
+                                    <partial name="_ScopeListItem" model="scope" />
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.View.AllowRememberConsent)
+                {
+                    <div class="form-group mt-3">
+                        <div class="form-check">
+                            <input class="form-check-input" asp-for="Input.RememberConsent">
+                            <label class="form-check-label" asp-for="Input.RememberConsent">
+                                Remember my decision
+                            </label>
+                        </div>
+                    </div>
+                }
+
+                <div class="consent-buttons mt-3">
+                    <button name="Input.Button" value="yes" class="btn btn-primary" autofocus>Yes, Allow</button>
+                    <button name="Input.Button" value="no" class="btn btn-secondary">No, Do Not Allow</button>
+                    @if (Model.View.ClientUrl != null)
+                    {
+                        <a class="btn btn-outline-info" href="@Model.View.ClientUrl">
+                            <span class="glyphicon glyphicon-info-sign"></span>
+                            <strong>@Model.View.ClientName</strong>
+                        </a>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,10 @@
+@* File: Rally/Pages/Shared/_ValidationSummary.cshtml *@
+@using Microsoft.AspNetCore.Mvc.ModelBinding
+@if (ViewData.ModelState.ErrorCount > 0)
+{
+    <div class="alert alert-danger" role="alert">
+        @* Uncomment if you want a generic header above the list of errors *@
+        @* <h4 class="alert-heading">Error</h4> *@
+        <div asp-validation-summary="All"></div> @* Use "All" or "ModelOnly" *@
+    </div>
+}
