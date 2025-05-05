@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using Rally.Models;
-
+using Serilog;
 namespace Rally.Areas.Identity.Pages.Account
 {
     public class LoginModel : PageModel
@@ -85,37 +85,19 @@ namespace Rally.Areas.Identity.Pages.Account
             public bool RememberMe { get; set; }
         }
 
-        public async Task OnGetAsync(string returnUrl = null)
-        {
-            if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                ModelState.AddModelError(string.Empty, ErrorMessage);
-            }
-
-            returnUrl ??= Url.Content("~/");
-
-            // Clear the existing external cookie to ensure a clean login process
-            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-
-            ReturnUrl = returnUrl;
-        }
-
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
-
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
             if (ModelState.IsValid)
             {
-                // This doesn't count login failures towards account lockout
-                // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: true);
+
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("User logged in.");
+                    // Include properties directly in the log message template
+                    _logger.LogInformation("User login successful for {Email}", Input.Email);
                     return LocalRedirect(returnUrl);
                 }
                 if (result.RequiresTwoFactor)
@@ -124,11 +106,14 @@ namespace Rally.Areas.Identity.Pages.Account
                 }
                 if (result.IsLockedOut)
                 {
-                    _logger.LogWarning("User account locked out.");
+                    // --- Include AlertType as a property in the Log call ---
+                    _logger.LogWarning("User account locked out for {Email}. AlertType: {AlertType}", Input.Email, "AccountLocked");
                     return RedirectToPage("./Lockout");
                 }
-                else
+                else // Invalid credentials
                 {
+                    // --- Include AlertType as a property in the Log call ---
+                     _logger.LogWarning("Invalid login attempt for {Email}. AlertType: {AlertType}", Input.Email, "LoginFailure");
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     return Page();
                 }

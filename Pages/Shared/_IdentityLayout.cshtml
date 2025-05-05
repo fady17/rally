@@ -1,0 +1,35 @@
+@* File: Rally/Pages/Shared/_IdentityLayout.cshtml *@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Rally Authentication</title> @* Changed Title Suffix *@
+    @* Remove script type="importmap" if you don't use it *@
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @* Link the main site.css AND the identity specific one *@
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/identity.css" asp-append-version="true" /> @* Added identity.css *@
+    <link rel="stylesheet" href="~/Rally.styles.css" asp-append-version="true" />
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="identity-page"> @* Added class for specific body styling *@
+
+    @* Removed Header *@
+
+    <div class="container"> @* Keep container or adjust based on identity.css *@
+        <main role="main" class="pb-3">
+            @RenderBody() @* This is where Login.cshtml, Consent.cshtml etc. will render *@
+        </main>
+    </div>
+
+    @* Removed Footer *@
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

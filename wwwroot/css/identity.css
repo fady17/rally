@@ -1,0 +1,121 @@
+/* wwwroot/css/identity.css */
+
+body.identity-page {
+    background-color: #121212; /* Dark background */
+    color: #e0e0e0; /* Light text color for contrast */
+}
+
+.rally-auth-container {
+    min-height: 100vh; /* Use full viewport height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px; /* Add some padding around */
+}
+
+.rally-auth-card {
+    max-width: 450px; /* Slightly narrower card? Adjust as needed */
+    width: 100%;
+    padding: 2.5rem; /* More padding */
+    background-color: #1e1e1e; /* Slightly lighter dark for card */
+    border-radius: 0.75rem;
+    border: 1px solid #333; /* Subtle border */
+    box-shadow: none; /* Remove box-shadow for flat dark design */
+}
+
+.rally-auth-logo {
+    max-width: 250px; /* Make logo larger */
+    height: auto; /* Maintain aspect ratio */
+    margin-bottom: 1.5rem;
+    /* No filter needed if using white logo on dark background */
+}
+
+.rally-auth-card h1 {
+    color: #ffffff; /* White heading */
+    font-weight: 300; /* Lighter font weight */
+}
+
+.rally-auth-card p,
+.rally-auth-card label,
+.rally-auth-card a,
+.rally-auth-card .form-check-label {
+    
+     color: #bdbdbd; /* Lighter grey for text/labels */
+}
+
+.rally-auth-card a {
+    color: #64b5f6; /* A light blue for links */
+    text-decoration: none;
+}
+.rally-auth-card a:hover {
+    color: #90caf9;
+    text-decoration: underline;
+}
+
+.rally-auth-card hr {
+    border-top: 1px solid #444; /* Darker hr */
+}
+
+
+/* Style form inputs for dark theme */
+.rally-auth-card .form-control {
+    background-color: #2c2c2c;
+    color: #e0e0e0;
+    border: 1px solid #555;
+}
+
+.rally-auth-card .form-control:focus {
+    background-color: #333;
+    color: #ffffff;
+    border-color: #64b5f6;
+    box-shadow: 0 0 0 0.25rem rgba(100, 181, 246, 0.25); /* Light blue focus ring */
+}
+
+/* Style floating label placeholder text */
+.rally-auth-card .form-floating > label {
+    color: #aaa; /* Adjust placeholder text color */
+}
+
+/* Style form check */
+.rally-auth-card .form-check-input {
+    background-color: #444;
+    border-color: #666;
+}
+.rally-auth-card .form-check-input:checked {
+     background-color: #64b5f6; /* Use link color for checked state */
+     border-color: #64b5f6;
+}
+.rally-auth-card .form-check-input:focus {
+    border-color: #90caf9;
+    box-shadow: 0 0 0 0.25rem rgba(100, 181, 246, 0.25);
+}
+
+
+/* Style primary button */
+.rally-button-primary {
+    background-color: #1e88e5; /* A slightly brighter blue */
+    border-color: #1e88e5;
+    color: #ffffff;
+    padding: 0.75rem 1.25rem; /* Make button larger */
+    font-size: 1.1rem;
+}
+.rally-button-primary:hover {
+    background-color: #1565c0;
+    border-color: #1565c0;
+}
+
+
+.text-center {
+    text-align: center;
+}
+
+/* Validation Message Styling */
+.rally-auth-card .text-danger {
+    color: #f44336; /* Standard danger red */
+}
+
+.rally-auth-card .alert-danger {
+    background-color: rgba(244, 67, 54, 0.1); /* Lighter red background */
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    color: #f44336;
+}

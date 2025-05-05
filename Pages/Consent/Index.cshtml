@@ -1,79 +1,71 @@
 @page "/consent"
 @model Rally.Pages.Consent.IndexModel
+@{
+    Layout = "/Pages/Shared/_IdentityLayout.cshtml";
+    ViewData["Title"] = "Connect Account"; // Shorter title
+}
 
-<div class="consent-page">
-    <div class="lead">
-        <h1>Consent</h1>
-        <p>@Model.View.ClientName would like to access your account.</p>
-    </div>
+<div class="rally-auth-container">
+    <div class="rally-auth-card"> @* Keep the card, maybe adjust max-width in CSS if needed *@
 
-    <partial name="_ValidationSummary" />
+        <div class="text-center mb-4">
+             <img src="~/images/rally.webp" alt="Rally Logo" class="rally-auth-logo" />
+             <h1 class="h4 mb-2 fw-normal">Connect with @Model.View.ClientName</h1> @* Adjusted heading *@
+             <p class="mb-3" style="color: #ccc;">
+                 Please confirm the permissions @Model.View.ClientName will receive.
+             </p>
+        </div>
 
-    <div class="row">
-        <div class="col-sm-8">
-            <form asp-page="/Consent/Index" method="post">
-                <input type="hidden" asp-for="Input.ReturnUrl" />
+        <partial name="_ValidationSummary" />
 
-                @if (Model.View.IdentityScopes?.Any() == true)
-                {
-                    <div class="form-group">
-                        <div class="card">
-                            <div class="card-header">
-                                <span class="glyphicon glyphicon-user"></span>
-                                Personal Information
-                            </div>
-                            <ul class="list-group list-group-flush">
+        <div class="row">
+            <div class="col-12"> @* Use full width inside card *@
+                <form asp-page="/Consent/Index" method="post">
+                    <input type="hidden" asp-for="Input.ReturnUrl" />
+
+                    @* Combine Scope Sections with clear dividers/headings if needed *@
+                    @if (Model.View.IdentityScopes?.Any() == true)
+                    {
+                        <div class="mb-4">
+                            <h6 class="text-light border-bottom border-secondary pb-2 mb-3">Basic Profile Information</h6>
+                            <ul class="list-unstyled"> @* Use unstyled list *@
                                 @foreach (var scope in Model.View.IdentityScopes)
                                 {
-                                    <partial name="_ScopeListItem" model="scope" />
+                                    <partial name="_ScopeListItem" model="scope" /> @* Partial needs adjustment too *@
                                 }
                             </ul>
                         </div>
-                    </div>
-                }
+                    }
 
-                @if (Model.View.ApiScopes?.Any() == true)
-                {
-                    <div class="form-group">
-                        <div class="card">
-                            <div class="card-header">
-                                <span class="glyphicon glyphicon-tasks"></span>
-                                Application Access
-                            </div>
-                            <ul class="list-group list-group-flush">
+                    @if (Model.View.ApiScopes?.Any() == true)
+                    {
+                         <div class="mb-4">
+                            <h6 class="text-light border-bottom border-secondary pb-2 mb-3">Application Permissions</h6>
+                            <ul class="list-unstyled"> @* Use unstyled list *@
                                 @foreach (var scope in Model.View.ApiScopes)
                                 {
                                     <partial name="_ScopeListItem" model="scope" />
                                 }
                             </ul>
                         </div>
-                    </div>
-                }
+                    }
 
-                @if (Model.View.AllowRememberConsent)
-                {
-                    <div class="form-group mt-3">
-                        <div class="form-check">
-                            <input class="form-check-input" asp-for="Input.RememberConsent">
+                    @if (Model.View.AllowRememberConsent)
+                    {
+                        <div class="form-check mb-4 text-center small">
+                            <input class="form-check-input" asp-for="Input.RememberConsent" style="margin-top: 0.2rem;">
                             <label class="form-check-label" asp-for="Input.RememberConsent">
-                                Remember my decision
+                                Remember my choice for @Model.View.ClientName
                             </label>
                         </div>
-                    </div>
-                }
-
-                <div class="consent-buttons mt-3">
-                    <button name="Input.Button" value="yes" class="btn btn-primary" autofocus>Yes, Allow</button>
-                    <button name="Input.Button" value="no" class="btn btn-secondary">No, Do Not Allow</button>
-                    @if (Model.View.ClientUrl != null)
-                    {
-                        <a class="btn btn-outline-info" href="@Model.View.ClientUrl">
-                            <span class="glyphicon glyphicon-info-sign"></span>
-                            <strong>@Model.View.ClientName</strong>
-                        </a>
                     }
-                </div>
-            </form>
+
+                    <div class="consent-buttons text-center d-grid gap-2 col-10 col-sm-8 mx-auto"> @* Adjust grid columns *@
+                        <button name="Input.Button" value="yes" class="btn btn-lg btn-primary rally-button-primary" autofocus>Connect My Rally Account</button>
+                        <button name="Input.Button" value="no" class="btn btn-sm btn-link text-muted mt-1" style="text-decoration: none;">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

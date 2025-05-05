@@ -1,10 +1,29 @@
-﻿@page
+﻿@page 
 @model LockoutModel
 @{
-    ViewData["Title"] = "Locked out";
+    ViewData["Title"] = "Time Out Corner";
+    Layout = "/Pages/Shared/_IdentityLayout.cshtml"; // Use the custom dark layout
 }
 
-<header>
-    <h1 class="text-danger">@ViewData["Title"]</h1>
-    <p class="text-danger">This account has been locked out, please try again later.</p>
-</header>
+<div class="rally-auth-container">
+    <div class="rally-auth-card text-center">
+
+        <div class="mb-4">
+             <img src="~/images/rally.webp" alt="Rally Philosophy Dept." class="rally-auth-logo" style="filter: grayscale(100%);" />
+            <h1 class="h3 mb-3 fw-normal text-info">Contemplation Period</h1>
+        </div>
+
+        <p class="lead text-info">Whoops! It seems your password and the concept of 'correctness' are currently estranged.</p>
+
+        <p>Perhaps they need some time apart?</p>
+        <p>This account is now meditating on its choices. It requests you do the same for a few minutes.</p>
+        <p>Maybe the real password was the friends we made along the way?</p>
+        <p>(Probably not. Please try again later.)</p>
+
+        <hr style="border-color: #444; margin: 1.5rem 0;" />
+
+         <p class="small text-muted">Status: Reflecting...</p>
+         <p class="small"><a asp-page="./Login" class="text-decoration-none">Return to Login (Perhaps with new insights?)</a></p>
+
+    </div>
+</div>

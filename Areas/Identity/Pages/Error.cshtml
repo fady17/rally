@@ -2,22 +2,37 @@
 @model ErrorModel
 @{
     ViewData["Title"] = "Error";
+    // This error page within Identity often uses the Manage layout by default,
+    // but we can point it to our custom Identity layout for consistency.
+    Layout = "/Pages/Shared/_IdentityLayout.cshtml";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<div class="rally-auth-container">
+    <div class="rally-auth-card text-center text-danger"> @* Use card styling *@
 
-@if (Model.ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
-}
+         <div class="mb-4">
+             <img src="~/images/rally.webp" alt="Rally Logo" class="rally-auth-logo" style="opacity: 0.7;" /> @* Add logo *@
+             <h1 class="h3 mb-3 fw-normal text-danger">@ViewData["Title"]</h1> @* Use danger text *@
+         </div>
 
-<h3>Development Mode</h3>
-<p>
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
-</p>
-<p>
-    <strong>Development environment should not be enabled in deployed applications</strong>, as it can result in sensitive information from exceptions being displayed to end users. For local debugging, development environment can be enabled by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>, and restarting the application.
-</p>
+        <p class="text-light"> @* Lighter text for readability *@
+            An error occurred while processing your request within the identity system.
+        </p>
+
+        @if (Model.ShowRequestId)
+        {
+            <p class="mt-3">
+                <strong class="text-white-50">Request ID:</strong> <code class="text-warning bg-dark p-1 rounded">@Model.RequestId</code>
+            </p>
+             <p class="small text-muted mt-3">
+                This information can be helpful for debugging purposes.
+            </p>
+        }
+
+        <p class="mt-4">
+            <a asp-page="/Index" class="btn btn-sm btn-secondary me-2">Return Home</a>
+            <a asp-page="/Identity/Account/Login" class="btn btn-sm btn-outline-light">Go to Login</a>
+        </p>
+
+    </div>
+</div>

@@ -1,8 +1,25 @@
 ﻿@page
 @model ConfirmEmailChangeModel
 @{
-    ViewData["Title"] = "Confirm email change";
+    ViewData["Title"] = "Email Change Confirmed";
+     Layout = "/Pages/Shared/_IdentityLayout.cshtml";
 }
 
-<h1>@ViewData["Title"]</h1>
-<partial name="_StatusMessage" model="Model.StatusMessage" />
+
+<div class="rally-auth-container">
+    <div class="rally-auth-card text-center">
+         <div class="mb-4">
+             <img src="~/images/rally.webp" alt="Rally Logo" class="rally-auth-logo" />
+            <h1 class="h3 mb-3 fw-normal">@ViewData["Title"]</h1>
+        </div>
+
+        <partial name="_StatusMessage" model="Model.StatusMessage" />
+
+         <p class="text-light mb-4">
+            Thank you for confirming your email change.
+        </p>
+        <p class="mt-4">
+             <a asp-page="./Login" class="btn btn-primary rally-button-primary">Return to Login</a>
+         </p>
+    </div>
+</div>

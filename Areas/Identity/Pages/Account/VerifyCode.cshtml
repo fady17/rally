@@ -1,0 +1,47 @@
+@page
+@model Rally.Areas.Identity.Pages.Account.VerifyCodeModel
+@{
+    ViewData["Title"] = "Verify Reset Code";
+    Layout = "/Pages/Shared/_IdentityLayout.cshtml";
+}
+
+<div class="rally-auth-container">
+    <div class="rally-auth-card">
+
+        <div class="text-center mb-4">
+            <img src="~/images/rally.webp" alt="Rally Logo" class="rally-auth-logo" />
+            <h1 class="h3 mb-3 fw-normal">@ViewData["Title"]</h1>
+            <p class="text-light">
+                A verification code has been sent to your email address (@Model.Email).
+                Please enter the code below to proceed with resetting your password.
+            </p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-10 col-lg-8 mx-auto">
+                <form method="post">
+                    <partial name="_ValidationSummary" model="ViewData.ModelState" />
+                    @* Hidden field to pass the email back during POST *@
+                    <input asp-for="Input.Email" type="hidden" />
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Code" class="form-control" autocomplete="off" aria-required="true" placeholder="123456" autofocus />
+                        <label asp-for="Input.Code" class="form-label"></label>
+                        <span asp-validation-for="Input.Code" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="w-100 btn btn-lg btn-primary rally-button-primary mb-3">Verify Code</button>
+
+                    <div class="text-center small">
+                         <p><a asp-page="./ForgotPassword">Resend Code?</a></p> @* Link back to start over *@
+                         <p><a asp-page="./Login">Cancel</a></p> @* Link back to login *@
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

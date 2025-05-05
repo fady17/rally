@@ -102,7 +102,7 @@ namespace Rally.Configuration
                     AllowOfflineAccess = false,
                     RequireConsent = true,
                 }
-                // Add more clients as needed for other apps/services
+                
             };
     }
 }

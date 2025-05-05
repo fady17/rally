@@ -1,29 +1,22 @@
 ﻿@{
-    if (ViewData.TryGetValue("ParentLayout", out var parentLayout) && parentLayout !=  null)
-    {
-        Layout = parentLayout.ToString();
-    }
-    else
-    {
-        Layout = "/Areas/Identity/Pages/_Layout.cshtml";
-    }
+
+    Layout = "/Pages/Shared/_IdentityLayout.cshtml";
 }
 
-<h1>Manage your account</h1>
 
 <div>
-    <h2>Change your account settings</h2>
-    <hr />
-    <div class="row">
-        <div class="col-md-3">
+    <h2 class="text-center text-light mb-4">Manage Your Rally Account</h2> @* Add centered title *@
+    <div class="row justify-content-center"> @* Center the columns *@
+        <div class="col-md-3 mb-3"> @* Column for Nav *@
+            @* Style the nav partial container if needed *@
             <partial name="_ManageNav" />
         </div>
-        <div class="col-md-9">
+        <div class="col-md-9"> @* Column for Content *@
             @RenderBody()
         </div>
     </div>
 </div>
 
 @section Scripts {
-    @RenderSection("Scripts", required: false)
+    @await RenderSectionAsync("Scripts", required: false)
 }

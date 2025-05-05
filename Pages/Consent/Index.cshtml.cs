@@ -110,13 +110,17 @@ namespace Rally.Pages.Consent
                 ClientUrl = client.ClientUri,
                 ClientLogoUrl = client.LogoUri,
                 AllowRememberConsent = client.AllowRememberConsent,
-
+                
+                // IdentityScopes = request.ValidatedResources.Resources.IdentityResources
+                //                      .Select(x => CreateScopeViewModel(x, model?.ScopesConsented == null || (model.ScopesConsented?.Contains(x.Name) ?? false)))
+                //                      .ToList(),
                 IdentityScopes = request.ValidatedResources.Resources.IdentityResources
-                                     .Select(x => CreateScopeViewModel(x, model?.ScopesConsented == null || (model.ScopesConsented?.Contains(x.Name) ?? false)))
-                                     .ToList(), // Use ToList for concrete type
+                            .Where(x => x.Name != Duende.IdentityServer.IdentityServerConstants.StandardScopes.OpenId) // <-- Add this .Where clause
+                            .Select(x => CreateScopeViewModel(x, model?.ScopesConsented == null || (model.ScopesConsented?.Contains(x.Name) ?? false)))
+                            .ToList(), 
                 ApiScopes = request.ValidatedResources.Resources.ApiScopes
                                 .Select(x => CreateScopeViewModel(x, model?.ScopesConsented == null || (model.ScopesConsented?.Contains(x.Name) ?? false)))
-                                .ToList() // Use ToList for concrete type
+                                .ToList() 
             };
             return vm;
         }

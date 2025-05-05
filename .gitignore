@@ -1,0 +1,209 @@
+# .NET Core / .NET 9 specific ignores
+## http://github.com/github/gitignore/blob/master/VisualStudio.gitignore
+## http://github.com/github/gitignore/blob/master/Global/JetBrains.gitignore
+## http://github.com/github/gitignore/blob/master/Global/Windows.gitignore
+## http://github.com/github/gitignore/blob/master/Global/macOS.gitignore
+## http://github.com/github/gitignore/blob/master/Global/Linux.gitignore
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/ # Ignore log directories (Serilog output)
+
+# Artifacts generator folder
+generated/
+
+# NuGet packages folder
+**/packages/*
+# Exceptions for package source control, if desired (generally not recommended)
+# !**/packages/repositories.config
+
+# Roslyn cache files
+.roslyn/
+
+# Tools
+# Ignore tools generated folders
+**/tools/*
+
+# StyleCop files
+StyleCopReport.xml
+
+# Fakes code generation output files
+FakesAssemblies/
+
+# Visual Studio code coverage results
+*.coverage
+*.coveragexml
+
+# Visual Studio Test files
+*.VisualState.xml
+*.Publish.xml
+*.pubxml
+*.vstemplate
+*.testsettings
+*.trx
+
+# NUnit capabilities page
+*.nunit
+
+# Build Verification Tests
+.vs/$(SolutionName)/v17/.suo # Exclude v17 .suo files (VS 2022)
+.vs/$(SolutionName)/v16/.suo # Exclude v16 .suo files (VS 2019)
+.vs/config # Exclude .vs directory containing user settings
+
+# Microsoft Azure stuff
+# Don't ignore Web.Debug.config or Web.Release.config because they are needed by the transforms
+# Ignore *.Publish.xml and *.pubxml files above.
+*.azpublishsettings
+
+# Visual Studio cache files
+# files ending in .cache can be ignored
+*.[Cc]ache
+# But keep track of directories named cache if they lead to renamed files
+!*.[Cc]ache/
+
+# ReSharper cache files
+**/_ReSharper*/ # R# cache folder
+*_i.c
+*_p.c
+*.resharper
+*.DotSettings # ReSharper personal settings file
+
+# TeamCity plugin files
+**/teamcity-mappings.xml
+
+# Local History files
+_LocalHistory/
+
+# Profiler results
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# Backup files
+*.bak
+
+# Windows thumbnail cache files
+Thumbs.db
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Windows stream identifiers
+ Zone.Identifier:$DATA
+
+# Mac specific
+.DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+ehthumbs_vista.db
+
+# Linux specific
+*~
+
+# IDE specific folders
+.idea/ # JetBrains Rider / IntelliJ
+.vscode/ # Visual Studio Code workspace settings (can sometimes be committed if standardized)
+
+# Secrets and Sensitive Configuration Files
+# =====================================
+# IMPORTANT: Ensure these files are never checked in!
+
+# User Secrets file - Contains development secrets
+secrets.json # Common name for manual secrets file
+*.secrets.json # Pattern for user secrets
+*.appsettings.secrets.json # Another common pattern
+
+# PFX certificate files (Private Keys)
+*.pfx
+
+# Keystore files (e.g., for Java interop or other cert formats)
+*.jks
+*.keystore
+
+# Environment variable files (commonly used locally, should not be committed)
+.env
+*.env
+
+# Configuration files that might contain production secrets if not careful
+# Be cautious committing any appsettings.*.json other than appsettings.json and appsettings.Development.json
+# appsettings.Production.json # Usually contains prod secrets - handle via Env Vars/Vault
+# appsettings.Staging.json # Usually contains staging secrets
+
+# Cloud Provider Credentials / Config Files (Examples)
+.aws/
+.azure/
+*.gserviceaccount.json
+
+# OAuth secrets downloaded from providers
+client_*.json # Pattern for Google OAuth, etc.
+
+# SSH keys
+*.pem # Can sometimes be SSH keys or certs
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+
+# Specific sensitive files by name
+credentials.*
+secrets.*
+config.prod.*
+key.*
+token.*
+
+# =====================================
+
+# Ignore Bundler packages
+**/bundle/*
+# Ignore output of webpack, vite etc if used for frontend assets
+**/dist/*
+**/build/*
+node_modules/
+
+# Rider specific folders
+**/Exported/
+.idea.solution/
+*.sln.iml
+
+# Service Fabric specific ignores
+**/ApplicationParameters/
+**/AppPackages/
+**/AppManifest.*.xml
+**/Cloud.*.cscfg
+**/Local.*.csdef
+
+# Docker specific ignores
+docker-compose.override.yml
+secrets/ # Secrets directory for docker build context
+
+# Entity Framework Core migration files snapshot file (some prefer not to commit)
+# Uncomment if you don't want to version control the snapshot
+# **/*DbContextModelSnapshot.cs
+
+# Rider temporary files
+**/.idea/.idea.*
