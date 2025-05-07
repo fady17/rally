@@ -1,0 +1,44 @@
+@page
+@model VerifyLoginCodeModel
+@{
+    ViewData["Title"] = "Verify Login Code";
+    Layout = "/Pages/Shared/_IdentityLayout.cshtml";
+}
+
+<div class="rally-auth-container">
+    <div class="rally-auth-card">
+        <div class="text-center mb-4">
+                <img src="~/images/rally.webp" alt="Rally Logo" class="rally-auth-logo" />
+                <h1 class="h3 mb-3 fw-normal">@ViewData["Title"]</h1>
+                @if (Model.IsNewUserScenario)
+                {
+                    <p class="text-light">To complete your Rally account creation for @Model.EmailForDisplay, please enter the code sent to your email.</p>
+                }
+                else
+                {
+                    <p class="text-light">A login code was sent to @Model.EmailForDisplay. Please enter it below.</p>
+                }
+            </div>
+
+        <div class="row">
+            <div class="col-md-10 col-lg-8 mx-auto">
+                <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
+                    <partial name="_StatusMessage" model="@TempData["StatusMessage"]" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+                    <input asp-for="Input.Email" type="hidden" /> @* Keep email in the form for POST *@
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Code" class="form-control" autocomplete="one-time-code" aria-required="true" placeholder="123456" autofocus />
+                        <label asp-for="Input.Code" class="form-label"></label>
+                        <span asp-validation-for="Input.Code" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="w-100 btn btn-lg btn-primary rally-button-primary">Log In / Verify</button>
+                </form>
+                 <div class="text-center small mt-3">
+                    <p><a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Resend Code?</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

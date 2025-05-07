@@ -1,0 +1,34 @@
+
+**/.classpath
+**/.dockerignore
+**/.env
+**/.git
+**/.gitignore
+**/.project
+**/.settings
+**/.toolstarget
+**/.vs
+**/.vscode
+**/*.*proj.user
+**/*.dbmdl
+**/*.jfm
+**/bin
+**/charts
+**/docker-compose*
+**/Dockerfile*
+**/node_modules
+**/obj
+**/secrets.dev.yaml
+**/values.dev.yaml
+.idea
+LICENSE
+README.md
+
+# Ignore certificate files
+*.pfx
+
+# Ignore User Secrets path marker (prevents warning)
+**/obj/Docker/empty/
+
+# Ignore local log files
+[Ll]ogs/

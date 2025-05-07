@@ -1,18 +1,28 @@
-﻿@{
-
+﻿@* File: Rally/Areas/Identity/Pages/Account/Manage/_Layout.cshtml *@
+@{
+    // Set the main layout for all Manage pages to our custom Identity layout
     Layout = "/Pages/Shared/_IdentityLayout.cshtml";
 }
 
+@* Add a container specifically for the Manage section title *@
+<div class="container rally-auth-container pt-4 pb-0"> @* Less padding than full auth pages *@
+     <div class="rally-auth-card" style="max-width: 900px; padding: 1.5rem;"> @* Wider card for manage section *@
+         <h2 class="text-center text-light mb-4">Manage Your Rally Account</h2>
+     </div>
+</div>
 
-<div>
-    <h2 class="text-center text-light mb-4">Manage Your Rally Account</h2> @* Add centered title *@
-    <div class="row justify-content-center"> @* Center the columns *@
-        <div class="col-md-3 mb-3"> @* Column for Nav *@
-            @* Style the nav partial container if needed *@
-            <partial name="_ManageNav" />
+@* Container for the two-column layout *@
+<div class="container mt-4"> @* Add margin top *@
+    <div class="row">
+        <div class="col-md-3 mb-3"> @* Sidebar column *@
+             @* Render the navigation partial - ensure it exists *@
+             <partial name="_ManageNav" />
         </div>
-        <div class="col-md-9"> @* Column for Content *@
-            @RenderBody()
+        <div class="col-md-9"> @* Main content column *@
+            @* Apply card styling to the content area *@
+             <div class="rally-auth-card p-4"> @* Re-use card styling but maybe different padding *@
+                 @RenderBody()
+             </div>
         </div>
     </div>
 </div>

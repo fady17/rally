@@ -74,9 +74,9 @@ namespace Rally.Configuration
                     RequirePkce = true,
 
                     // --- UPDATE THIS PORT ---
-                    RedirectUris = { "https://localhost:7153/signin-oidc" },
+                    RedirectUris = { "https://localhost:7272/signin-oidc" },
                     // --- UPDATE THIS PORT ---
-                    PostLogoutRedirectUris = { "https://localhost:7153/signout-callback-oidc" },
+                    PostLogoutRedirectUris = { "https://localhost:7272/signout-callback-oidc" },
 
                     AllowedScopes = { "openid", "profile", "email" },
 

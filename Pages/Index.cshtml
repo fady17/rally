@@ -1,10 +1,50 @@
-﻿@page
+﻿@page "/"
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Rally Authentication Home";
+   
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+
+<div class="text-center"> @* Center the content on this page *@
+
+    <div class="mb-4 mt-4"> @* Add some margin *@
+        <img src="~/images/rally.webp" alt="Rally Logo" width="200" /> @* Adjust width, ensure logo works on light background now? *@
+        <h1 class="display-4">Rally Group Authentication</h1> @* Use display heading *@
+    </div>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <p class="lead mb-3">
+            Welcome back, <span class="fw-bold">@(Model.UserEmail ?? User.Identity.Name)!</span>
+        </p>
+        <p class="mb-4">You are currently logged into the central Rally authentication service.</p>
+
+        @* Links can remain, they will appear below the main content area *@
+        <div class="mb-4">
+             <a asp-area="Identity" asp-page="/Account/Manage/Index" class="btn btn-outline-secondary">Manage Your Account</a>
+        </div>
+
+        @* Keep Brand Links? Could go in footer maybe if using main layout? *@
+        <hr />
+        <div class="mt-4">
+            <p>Access your Rally Group services:</p>
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                <a href="#" class="btn btn-sm btn-outline-primary">Rally Motors</a>
+                <a href="#" class="btn btn-sm btn-outline-primary">Hetro Clothing</a>
+                <a href="#" class="btn btn-sm btn-outline-primary">Dental Clinics</a>
+            </div>
+        </div>
+    }
+    else // User is NOT Authenticated
+    {
+        <p class="lead mb-4">
+            This service handles secure login for Rally Group applications.
+        </p>
+         <p class="mt-4">
+              Use the navigation bar above to log in or register.
+              @* Or keep explicit button if preferred: *@
+             @* <a class="btn btn-primary rally-button-primary" asp-area="Identity" asp-page="/Account/Login">Go to Login</a> *@
+         </p>
+    }
 </div>
