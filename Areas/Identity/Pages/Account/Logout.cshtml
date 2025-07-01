@@ -1,21 +1,24 @@
 ﻿@page
-@model LogoutModel
+@model Rally.Areas.Identity.Pages.Account.LoggedOutModel
 @{
-    ViewData["Title"] = "Log out";
+    ViewData["Title"] = "Logged out";
 }
 
-<header>
+<div class="logged-out-page text-center mt-5">
     <h1>@ViewData["Title"]</h1>
-    @{
-        if (User.Identity?.IsAuthenticated ?? false)
-        {
-            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
-                <button type="submit" class="nav-link btn btn-link text-dark">Click here to Logout</button>
-            </form>
-        }
-        else
-        {
-            <p>You have successfully logged out of the application.</p>
-        }
+    <p class="lead">You have successfully logged out.</p>
+
+    @if (Model.View?.PostLogoutRedirectUri != null)
+    {
+        <p>
+            Click <a class="btn btn-primary" href="@Model.View.PostLogoutRedirectUri">here</a>
+            to return to the <span>@Model.View.ClientName</span> application.
+        </p>
     }
-</header>
+
+    @if (Model.View?.SignOutIframeUrl != null)
+    {
+        <iframe width="0" height="0" class="signout" sandbox="allow-same-origin allow-forms" src="@Model.View.SignOutIframeUrl"></iframe>
+    }
+</div>
+

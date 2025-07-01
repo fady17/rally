@@ -182,65 +182,151 @@ try
     var app = builder.Build();
     // ========================================================================
 
+   // In Rally.IdP/Program.cs
+
     // --- Seed Initial OIDC Configuration Data (Development Only) ---
     if (app.Environment.IsDevelopment())
     {
         try
         {
-            Log.Information("Attempting database seeding..."); // Log seeding start
+            Log.Information("Attempting database seeding for Duende IdentityServer configuration...");
             using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
                 var provider = serviceScope.ServiceProvider;
                 var configContext = provider.GetRequiredService<ConfigurationDbContext>();
                 var logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("StartupSeeding");
 
-                // Identity Resources
-                bool anyIdentity = await configContext.IdentityResources.AnyAsync();
-                logger.LogInformation("Seeding Check: IdentityResources.AnyAsync() = {AnyResult}", anyIdentity);
-                if (!anyIdentity)
+                await configContext.Database.MigrateAsync(); // Ensure migrations are applied
+
+                // --- Seed Identity Resources ---
+                var identityResourcesInConfig = Config.GetIdentityResources().ToList();
+                var existingIdentityResourceNames = await configContext.IdentityResources.Select(ir => ir.Name).ToListAsync();
+                
+                foreach (var resource in identityResourcesInConfig)
                 {
-                    logger.LogInformation("--> Seeding Identity Resources...");
-                    foreach (var resource in Config.GetIdentityResources()) { configContext.IdentityResources.Add(resource.ToEntity()); }
-                    await configContext.SaveChangesAsync();
-                    logger.LogInformation("--> Done Seeding Identity Resources.");
+                    if (!existingIdentityResourceNames.Contains(resource.Name))
+                    {
+                        logger.LogInformation("--> Seeding NEW IdentityResource: {IdentityResourceName}", resource.Name);
+                        configContext.IdentityResources.Add(resource.ToEntity());
+                    }
+                    // else { logger.LogInformation("--> IdentityResource '{IdentityResourceName}' already exists.", resource.Name); }
                 }
 
-                // API Scopes
-                bool anyApiScopes = await configContext.ApiScopes.AnyAsync();
-                logger.LogInformation("Seeding Check: ApiScopes.AnyAsync() = {AnyResult}", anyApiScopes);
-                if (!anyApiScopes)
+                // --- Seed API Scopes ---
+                var apiScopesInConfig = Config.GetApiScopes().ToList();
+                var existingApiScopeNames = await configContext.ApiScopes.Select(s => s.Name).ToListAsync();
+
+                foreach (var scope in apiScopesInConfig)
                 {
-                     logger.LogInformation("--> Seeding Api Scopes...");
-                    foreach (var scope in Config.GetApiScopes()) { configContext.ApiScopes.Add(scope.ToEntity()); }
-                    await configContext.SaveChangesAsync();
-                     logger.LogInformation("--> Done Seeding Api Scopes.");
+                    if (!existingApiScopeNames.Contains(scope.Name))
+                    {
+                        logger.LogInformation("--> Seeding NEW ApiScope: {ApiScopeName}", scope.Name);
+                        configContext.ApiScopes.Add(scope.ToEntity());
+                    }
+                    // else { logger.LogInformation("--> ApiScope '{ApiScopeName}' already exists.", scope.Name); }
+                }
+                
+                // --- Seed API Resources ---
+                var apiResourcesInConfig = Config.GetApiResources().ToList();
+                var existingApiResourceNames = await configContext.ApiResources.Select(ar => ar.Name).ToListAsync();
+
+                foreach (var resource in apiResourcesInConfig)
+                {
+                    if (!existingApiResourceNames.Contains(resource.Name))
+                    {
+                        logger.LogInformation("--> Seeding NEW ApiResource: {ApiResourceName}", resource.Name);
+                        configContext.ApiResources.Add(resource.ToEntity());
+                    }
+                    // else { logger.LogInformation("--> ApiResource '{ApiResourceName}' already exists.", resource.Name); }
                 }
 
-                // Clients
-                bool anyClients = await configContext.Clients.AnyAsync();
-                logger.LogInformation("Seeding Check: Clients.AnyAsync() = {AnyResult}", anyClients); // Log the check result
-                if (!anyClients)
+                // --- Seed Clients ---
+                var clientsInConfig = Config.GetClients().ToList();
+                var existingClientIds = await configContext.Clients.Select(c => c.ClientId).ToListAsync();
+
+                foreach (var client in clientsInConfig)
                 {
-                     logger.LogInformation("--> Seeding Clients...");
-                    foreach (var client in Config.GetClients()) { configContext.Clients.Add(client.ToEntity()); }
-                    await configContext.SaveChangesAsync();
-                    logger.LogInformation("--> Done Seeding Clients.");
+                    if (!existingClientIds.Contains(client.ClientId))
+                    {
+                        logger.LogInformation("--> Seeding NEW Client: {ClientId}", client.ClientId);
+                        // Ensure all navigation properties (like AllowedScopes) are correctly mapped by ToEntity()
+                        // If client.AllowedScopes from Config.cs is just a list of strings,
+                        // and ToEntity() needs the actual Scope entities, this part might need adjustment
+                        // or ensure that ClientMappers.ToEntity correctly handles scope strings.
+                        // For Duende IS, client.AllowedScopes is typically List<string> in the model.
+                        configContext.Clients.Add(client.ToEntity());
+                    }
+                    else
+                    {
+                        // OPTIONAL: Update existing client if needed (e.g., if scopes changed)
+                        // This is more complex as it involves fetching the existing client,
+                        // comparing properties, and updating. For MVP, adding if missing is simpler.
+                        logger.LogInformation("--> Client '{ClientId}' already exists. Consider manual update or more complex seeding if properties changed.", client.ClientId);
+                        
+                        // Example of updating scopes for an existing client (simplified):
+                        var existingClient = await configContext.Clients
+                            .Include(c => c.AllowedScopes) // Important: Include existing scopes
+                            .FirstOrDefaultAsync(c => c.ClientId == client.ClientId);
+                        
+                        if (existingClient != null)
+                        {
+                            bool clientUpdated = false;
+                            // Check and update AllowedScopes
+                            var newScopes = client.AllowedScopes.ToList();
+                            var currentScopes = existingClient.AllowedScopes.Select(s => s.Scope).ToList();
+
+                            // Add scopes not yet present
+                            foreach (var newScope in newScopes)
+                            {
+                                if (!currentScopes.Contains(newScope))
+                                {
+                                    existingClient.AllowedScopes.Add(new Duende.IdentityServer.EntityFramework.Entities.ClientScope { Scope = newScope });
+                                    clientUpdated = true;
+                                    logger.LogInformation("----> Added scope '{Scope}' to client '{ClientId}'", newScope, client.ClientId);
+                                }
+                            }
+                            // Remove scopes no longer needed (more complex, be careful with relationships)
+                            // For simplicity, we'll just add missing ones for now.
+                            // To remove, you'd find scopes in currentScopes not in newScopes and remove them from existingClient.AllowedScopes.
+
+                            // Compare other properties and update if necessary (ClientName, RedirectUris, etc.)
+                            if (existingClient.ClientName != client.ClientName)
+                            {
+                                existingClient.ClientName = client.ClientName;
+                                clientUpdated = true;
+                            }
+                            // Add similar checks for RedirectUris, PostLogoutRedirectUris etc.
+                            // Be careful with collections - you often need to clear and re-add or manage individual items.
+
+                            if(clientUpdated)
+                            {
+                                logger.LogInformation("--> Updating existing Client: {ClientId}", client.ClientId);
+                            }
+                        }
+                    }
                 }
-                 else
-                 {
-                     logger.LogWarning("--> SKIPPING Client Seeding because Clients.AnyAsync() returned true."); // Log skip reason
-                 }
+
+                // Save all changes made during seeding
+                var changes = await configContext.SaveChangesAsync();
+                if (changes > 0)
+                {
+                    logger.LogInformation("--> Database seeding applied {ChangeCount} changes.", changes);
+                }
+                else
+                {
+                    logger.LogInformation("--> No new configuration entities needed to be seeded, or no changes detected in existing clients.");
+                }
             }
-             Log.Information("Database seeding attempt finished.");
+            Log.Information("Database seeding attempt finished.");
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "XXXXXXXXXX Error during DB Seeding."); // Log Error, not just Console
-            // throw; // Consider re-throwing if seeding is essential for startup
+            Log.Error(ex, "XXXXXXXXXX Error during Duende IdentityServer DB Seeding. Check configuration and database state.");
+            // Consider re-throwing if seeding is essential for startup, especially for first run.
+            // throw;
         }
     }
-
-    // --- Configure the HTTP request pipeline ---
+    
     // Configure Forwarded Headers VERY EARLY if behind proxy
     // app.UseForwardedHeaders();
 
@@ -267,7 +353,14 @@ try
             .AddContentSecurityPolicy(csp =>
                {
                    csp.AddObjectSrc().None();
-                   csp.AddFormAction().Self().From("https://localhost:7272"); // Adjust port if client changes
+                   csp.AddFormAction()
+                    .Self()
+                    .From("*");  // Accept form submissions from any origin
+                //    csp.AddFormAction().From("https://localhost:7223");
+                //    csp.AddFormAction().Self();   //.From("*"); when debug .Self();
+                    // .From("https://localhost:7223")                    
+                    // .From("https://localhost:7272")
+                    // .From("https://localhost:7268");
                    csp.AddFrameAncestors().None();
                    csp.AddScriptSrc().Self().UnsafeInline(); // Keep unsafe-inline for now
                    csp.AddStyleSrc().Self().UnsafeInline(); // Add if needed for inline styles
