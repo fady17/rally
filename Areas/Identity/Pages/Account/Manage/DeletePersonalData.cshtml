@@ -1,32 +1,47 @@
-﻿@page
+﻿@page 
 @model DeletePersonalDataModel
 @{
     ViewData["Title"] = "Delete Personal Data";
     ViewData["ActivePage"] = ManageNavPages.PersonalData;
+    Layout = "/Pages/Shared/_IdentityLayout.cshtml"; 
 }
 
-<h3>@ViewData["Title"]</h3>
+<h4 class="text-light text-center mb-4">Manage Your Rally Account</h4>
 
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
-    </p>
-</div>
+<div class="row justify-content-center">
+    <div class="col-lg-3 col-md-4 mb-3">
+        <partial name="_ManageNav" />
+    </div>
+    <div class="col-lg-7 col-md-8">
+        <div class="rally-auth-card p-4"> @* Apply card styling *@
 
-<div>
-    <form id="delete-user" method="post">
-        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-        @if (Model.RequirePassword)
-        {
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Please enter your password." />
-                <label asp-for="Input.Password" class="form-label"></label>
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            <h5 class="text-light mb-3">@ViewData["Title"]</h5>
+
+            <div class="alert alert-danger" role="alert"> @* Use alert-danger for high severity warning *@
+                <p class="mb-0"> @* Remove default paragraph margin *@
+                    <strong class="d-block">Deleting this data will permanently remove your Rally account, and this cannot be recovered.</strong>
+                </p>
             </div>
-        }
-        <button class="w-100 btn btn-lg btn-danger" type="submit">Delete data and close my account</button>
-    </form>
-</div>
+
+            <div>
+                <form id="delete-user" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+                    @if (Model.RequirePassword)
+                    {
+                        <div class="form-floating mb-3">
+                            <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Please enter your password." />
+                            <label asp-for="Input.Password" class="form-label"></label>
+                            <span asp-validation-for="Input.Password" class="text-danger"></span>
+                        </div>
+                    }
+                    @* Use custom button class if desired, keep btn-danger for visual warning *@
+                    <button class="w-100 btn btn-lg btn-danger" type="submit">Delete data and close my account</button>
+                </form>
+            </div>
+
+        </div> @* End Content Card *@
+    </div> @* End Content Column *@
+</div> @* End Row *@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

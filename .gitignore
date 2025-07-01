@@ -207,3 +207,5 @@ secrets/ # Secrets directory for docker build context
 
 # Rider temporary files
 **/.idea/.idea.*
+
+tempkey.jwk

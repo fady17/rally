@@ -1,0 +1,85 @@
+# docker-compose.yml - Base for Staging/Production on Ubuntu
+
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:16
+    container_name: rally-postgres # Generic name
+    environment:
+      # CRITICAL: These MUST be set in the server's environment or via deployment tools
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      # Use different volume name for staging/prod data
+      - postgres_data:/var/lib/postgresql/data
+    restart: always # Restart automatically on failure/reboot
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+    # ports: - DO NOT expose DB port directly in staging/prod unless specifically needed
+
+  rally-idp:
+    container_name: rally-idp # Generic name
+    # Build from Dockerfile in the current directory (.)
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      # Expose internal port 8080, map to host port 8080 (or another if needed)
+      # External mapping (e.g., 443 -> 8080) should be handled by a reverse proxy (Nginx)
+      - "8080:8080"
+    environment:
+      # CRITICAL: Set environment via host or deployment tool
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production} # Default to Production if not set
+      - ASPNETCORE_URLS=http://+:8080 # Listen on HTTP internally
+      # Database connection (use service name, secrets from env vars)
+      - ConnectionStrings__DefaultConnection=Host=postgres-db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      # Signing certificate settings (password from env var, path inside container)
+      - IdentityServer__SigningCertPath=/etc/ssl/certs/rally-signing-cert.pfx
+      - IdentityServer__SigningCertPassword=${IDP_SIGNING_CERT_PASSWORD}
+      # Discord Webhook
+      - Discord__WebhookUrl=${DISCORD_WEBHOOK_URL}
+      # Forwarded Headers configuration (basic enablement)
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+    volumes:
+      # Mount the signing certificate from a SECURE host path
+      # Ensure this path exists on the Ubuntu host and has correct permissions
+      - ${IDP_SIGNING_CERT_PATH_ON_HOST}:/etc/ssl/certs/rally-signing-cert.pfx:ro
+    depends_on:
+      postgres-db:
+        condition: service_healthy # Wait for DB to be ready
+    restart: always # Restart automatically on failure/reboot
+
+  # --- PRODUCTION ONLY SERVICE ---
+  postgres-backup:
+    # This service should ONLY be included in docker-compose.prod.yml
+    image: prodrigestivill/postgres-backup-local:16 # Match postgres version
+    container_name: rally-postgres-backup
+    restart: always
+    volumes:
+      # Mount backup storage location from host or named volume
+      - postgres_backups:/backups
+      # Optional: Mount DB data directly (read-only) if needed, but connecting via network is often better
+      # - postgres_data:/var/lib/postgresql/data:ro
+    environment:
+      # CRITICAL: Set these in production environment
+      - POSTGRES_HOST=postgres-db # Connect to the DB service
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - SCHEDULE=0 3 * * * # Backup daily at 3 AM (Cron syntax)
+      - BACKUP_KEEP_DAYS=14 # Keep 14 days of backups
+      - BACKUP_KEEP_WEEKS=4 # Keep 4 weekly backups
+      - BACKUP_KEEP_MONTHS=3 # Keep 3 monthly backups
+      # Optional: Add --clean to remove objects before restoring (if using restore features)
+      - POSTGRES_EXTRA_OPTS=--clean --if-exists
+    depends_on:
+      - postgres-db # Backup runs after DB is up
+
+volumes:
+  postgres_data:
+  postgres_backups: # Define backup volume only needed for Prod compose

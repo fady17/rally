@@ -1,8 +1,65 @@
-﻿@page
+﻿@page 
 @model PrivacyModel
 @{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Your Privacy at Rally";
+    
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+@* Add a container for better spacing and centering if needed *@
+<div class="container mt-4 mb-5">
+
+    <div class="text-center mb-5">
+        @* Optional: Add a relevant, friendly icon/image *@
+        @* <img src="~/images/privacy-icon.svg" alt="Privacy" width="80" class="mb-3" /> *@
+        <h1 class="display-5">@ViewData["Title"]</h1>
+        <p class="lead text-muted">How we handle your information when you log in.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-md-10">
+
+            <h2 class="h4 mb-3">Our Simple Promise</h2>
+            <p>Welcome! When you use your Rally account to log into our different brand applications (like Rally Motors, Hetro Clothing, or our Dental Clinics), this central Rally Authentication service helps make that happen securely. Our main goal here is just to confirm it's really you logging in.</p>
+            <p>We value your trust and want to be crystal clear about the information involved.</p>
+
+            <hr class="my-4">
+
+            <h2 class="h4 mb-3">What Information We Use (And Why)</h2>
+            <ul>
+                <li><strong>Your Login Info (Email & Password):</strong> We use this strictly to verify your identity when you log in directly to this Rally Authentication service. Your password is securely hashed (scrambled), and we can't see it.</li>
+                <li><strong>Your Basic Profile Info (like Name & Email Address):</strong> When you log into one of our brand apps (like Hetro Clothing) for the first time using your Rally account, we'll ask for your consent to share basic details like your name and email *with that specific brand app*. This helps them greet you and personalize your experience. We only share what's needed for that app to work smoothly for you.</li>
+                <li><strong>Your Unique Rally ID:</strong> Behind the scenes, we assign a unique identifier to your Rally account. When you log into different brand apps, we share this ID so the apps know it's the same person. This is what allows us to connect your activity across brands for things like the future loyalty program, but the ID itself doesn't reveal your name or email directly.</li>
+                <li><strong>Security Information (like IP Address, Login Times):</strong> We log technical details when you log in to help keep your account secure, detect suspicious activity, and troubleshoot issues.</li>
+            </ul>
+
+            <hr class="my-4">
+
+            <h2 class="h4 mb-3">What We *Don't* Do</h2>
+            <ul>
+                <li>We **don't** share your password with any of the brand applications.</li>
+                <li>We **don't** share your activity on one brand's app (e.g., your Hetro Clothing browsing history) with another brand's app (e.g., the Dental Clinic) *through this login service*. Each brand app manages its own data according to its own privacy policy.</li>
+                <li>We **don't** sell your personal login or profile information to third parties.</li>
+            </ul>
+
+             <hr class="my-4">
+
+             <h2 class="h4 mb-3">Your Choices & Control</h2>
+            <ul>
+                <li><strong>Consent:** You control which basic information is shared with each brand app the first time you log in via the Consent screen.</li>
+                <li><strong>Account Management:** You can manage your password, email, and other details through the "Manage Your Account" section when logged into this service.</li>
+                <li><strong>Deleting Your Data:** You can request to download or delete your Rally account data via the "Personal Data" section under "Manage Your Account". Please remember, deleting your central Rally account will prevent you from logging into *all* associated brand apps using this method.</li>
+            </ul>
+
+             <hr class="my-4">
+
+             <h2 class="h4 mb-3">Cookies</h2>
+             <p>Like most login systems, we use essential cookies to keep you securely logged in during your session and to remember things like your consent choices. These are necessary for the service to function.</p>
+
+             <hr class="my-4">
+
+             <h2 class="h4 mb-3">Questions?</h2>
+            <p>This is a simplified overview for clarity. For the full legal details, please refer to the official Rally Group Privacy Policy (TODO: Link to actual policy). If you have any questions about how this specific authentication service handles your data, please contact our support team info@Rally.com .</p>
+
+        </div>
+    </div>
+</div>

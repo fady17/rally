@@ -2,28 +2,45 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Profile";
-    ViewData["ActivePage"] = ManageNavPages.Index;
+    ViewData["ActivePage"] = ManageNavPages.Index; 
+    
 }
 
-<h3>@ViewData["Title"]</h3>
-<partial name="_StatusMessage" for="StatusMessage" />
-<div class="row">
-    <div class="col-md-6">
-        <form id="profile-form" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Username" class="form-control" placeholder="Please choose your username." disabled />
-                <label asp-for="Username" class="form-label"></label>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number."/>
-                <label asp-for="Input.PhoneNumber" class="form-label"></label>
-                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
-            </div>
-            <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
-        </form>
+@* Add the Title for the Manage section - Centered *@
+<h4 class="text-light text-center mb-4">Manage Your Rally Account</h4>
+
+<div class="row justify-content-center"> @* Center the overall row content horizontally *@
+    <div class="col-lg-3 col-md-4 mb-3"> @* Sidebar Nav Column - Adjust responsiveness if needed *@
+        <partial name="_ManageNav" />
     </div>
-</div>
+    <div class="col-lg-7 col-md-8"> @* Content Column - Adjust responsiveness if needed *@
+        <div class="rally-auth-card p-4"> @* Use the standard card style for the content box *@
+
+            <h5 class="text-light mb-3">@ViewData["Title"]</h5> @* Title specific to this page *@
+            <partial name="_StatusMessage" for="StatusMessage" /> @* Display status messages *@
+
+            <form id="profile-form" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+                @* Username (usually email) - Readonly *@
+                <div class="mb-3">
+                    <label asp-for="Username" class="form-label text-white-50"></label> @* Lighter label text *@
+                    <input asp-for="Username" class="form-control" disabled /> @* Standard input styling, disabled *@
+                </div>
+
+                @* Phone Number - Editable *@
+                <div class="mb-3">
+                    <label asp-for="Input.PhoneNumber" class="form-label text-white-50"></label>
+                    <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number."/>
+                    <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+                </div>
+
+                <button id="update-profile-button" type="submit" class="w-100 btn btn-primary rally-button-primary">Save</button>
+            </form>
+        </div> @* End Content Card *@
+    </div> @* End Content Column *@
+</div> @* End Row *@
+
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

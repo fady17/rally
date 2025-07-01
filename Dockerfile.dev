@@ -1,0 +1,42 @@
+# Dockerfile.dev
+# Use the SDK image for development tools like dotnet watch
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS base
+
+# --- Declare Build Arguments FIRST ---
+ARG APP_UID=1000 # Default value if not provided during build
+ARG APP_GID=1000 # Default value if not provided during build
+# --- END Argument Declaration ---
+
+WORKDIR /app
+EXPOSE 5005 7223
+
+# Prevent SDK from creating root-owned files, now using declared ARGs
+RUN mkdir -p /root/.nuget && chown ${APP_UID}:${APP_GID} /root/.nuget
+RUN mkdir -p /root/.microsoft && chown ${APP_UID}:${APP_GID} /root/.microsoft # For user secrets
+USER ${APP_UID}:${APP_GID}
+
+# --- This part is optional but helps cache restore layer ---
+# Copy csproj and restore as distinct layers
+COPY *.sln .
+COPY Rally/*.csproj ./Rally/
+# Add other project folders if you have class libraries etc.
+# COPY YourLibrary/YourLibrary.csproj ./YourLibrary/
+
+# It's better to run restore as the app user if possible, but ensure permissions
+# If restoring as root, chown the files afterwards
+# USER root # Temporarily switch to root if needed for restore, then back
+RUN dotnet restore Rally/Rally.csproj
+# USER ${APP_UID}:${APP_GID} # Switch back if you changed user for restore
+# ------------------------------------------------------------
+
+# Copy everything else
+COPY . .
+
+# Set the working directory to the main project
+WORKDIR /app/Rally
+
+# Expose the ports again (optional, but good practice)
+EXPOSE 5005 7223
+
+# Entrypoint for hot reload
+ENTRYPOINT ["dotnet", "watch", "run", "--launch-profile", "https"]

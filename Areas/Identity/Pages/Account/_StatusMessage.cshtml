@@ -1,10 +1,21 @@
-﻿@model string
+﻿
+@model string
 
 @if (!String.IsNullOrEmpty(Model))
 {
-    var statusMessageClass = Model.StartsWith("Error") ? "danger" : "success";
-    <div class="alert alert-@statusMessageClass alert-dismissible" role="alert">
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    // Use text-dark on light backgrounds (success, info, warning)
+    // Use text-white on dark background (danger)
+    var statusMessageClass = Model.StartsWith("Error") ? "danger text-white" : "success text-dark";
+    // Adjust background/border for dark theme if needed
+    var alertBgClass = Model.StartsWith("Error") ? "bg-danger" : "bg-success-subtle"; // Example Bootstrap 5.3+ bg tints
+    var borderClass = Model.StartsWith("Error") ? "border-danger" : "border-success-subtle";
+
+    // Original Bootstrap alert structure
+    // <div class="alert alert-@statusMessageClass alert-dismissible" role="alert">
+
+    // Custom dark theme version (adjust colors as needed)
+     <div class="alert alert-@statusMessageClass @alertBgClass @borderClass alert-dismissible rounded mb-3" role="alert">
         @Model
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }

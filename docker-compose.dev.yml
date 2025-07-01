@@ -1,0 +1,72 @@
+# docker-compose.dev.yml - For local development on macOS/Windows
+
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:16 # Use specific major version
+    container_name: rally-postgres-dev
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # Read from .env file
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data # Persistent data volume
+    ports:
+      - "5432:5432" # Expose DB port to host for tools like DBeaver/pgAdmin
+    restart: unless-stopped
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+  rally-idp:
+    container_name: rally-idp-dev
+    # Build from Dockerfile.dev in the current directory (.)
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args: # Pass user/group ID for file permissions
+        APP_UID: ${APP_UID:-1000} # Default to 1000 if not set in .env
+        APP_GID: ${APP_GID:-1000} # Default to 1000 if not set in .env
+    ports:
+      # Map host ports to container ports defined in launchSettings/Dockerfile.dev
+      - "5005:5005" # HTTP
+      - "7223:7223" # HTTPS
+    environment:
+      # Set environment and URLs for Kestrel inside container
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:7223;http://+:5005
+      # Dev certificate settings (Kestrel reads from mounted volume)
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${ASPNETCORE_KESTREL_CERTIFICATE_PASSWORD}
+      # Database connection (use service name 'postgres-db' as host)
+      - ConnectionStrings__DefaultConnection=Host=postgres-db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Include Error Detail=true
+      # Signing certificate settings (password from .env, path is inside container)
+      - IdentityServer__SigningCertPath=/etc/ssl/certs/rally-signing-cert.pfx
+      - IdentityServer__SigningCertPassword=${IDP_SIGNING_CERT_PASSWORD}
+      # Discord Webhook
+      - Discord__WebhookUrl=${DISCORD_WEBHOOK_URL}
+    volumes:
+      # Mount source code for hot reload (adjust if project structure differs)
+      - ./Rally:/app/Rally
+      # Mount NuGet cache for faster restores
+      - ~/.nuget/packages:/root/.nuget/packages:ro
+      # Mount ASP.NET Core dev certificate for HTTPS inside container
+      - ~/.aspnet/https:/https/:ro
+      # Mount User Secrets directory
+      # Replace <USER_SECRETS_ID> with your actual ID from .env or .csproj
+      - ~/.microsoft/usersecrets/${USER_SECRETS_ID}:/root/.microsoft/usersecrets/${USER_SECRETS_ID}:ro
+      # Mount the signing certificate from the host path specified in .env
+      - ${IDP_SIGNING_CERT_PATH_ON_HOST}:/etc/ssl/certs/rally-signing-cert.pfx:ro # Read-only mount
+    depends_on:
+      postgres-db:
+        condition: service_healthy # Wait for DB to be ready
+    restart: unless-stopped
+    # Optional: For Debugging, keep stdin open and use TTY
+    # stdin_open: true
+    # tty: true
+
+volumes:
+  postgres_data_dev: # Define the named volume for DB data

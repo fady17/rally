@@ -1,5 +1,5 @@
 // File: Rally/Services/DiscordWebhookSink.cs
-#nullable enable // Enable nullable reference types for this file
+#nullable enable 
 
 using Serilog.Core;
 using Serilog.Events;
@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using System;
 using Serilog.Configuration;
 
-namespace Rally.Services // Or Rally.Logging
+namespace Rally.Services 
 {
     public class DiscordWebhookSink : ILogEventSink, IDisposable
     {
