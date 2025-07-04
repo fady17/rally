@@ -28,33 +28,41 @@ The diagram below illustrates the core components and the primary authentication
 
 ```mermaid
 graph TD
-    subgraph User Browser
-        U(User)
-        BP[/"Logistics Management Portal (Blazor WebAssembly)"/]
+    subgraph Client ["🌐 Client Environment"]
+        U[👤 User]
+        BP["💻 Logistics Management Portal<br/><small>Blazor WebAssembly</small>"]
     end
 
-    subgraph Secure Network
-        subgraph "ASP.NET Core Host"
-            IDP[("Rally IdP (Duende IdentityServer)")]
-            API[("Logistics API")]
+    subgraph SecureNet ["🔒 Secure Network Infrastructure"]
+        subgraph Host ["⚡ ASP.NET Core Host"]
+            IDP["🛡️ Rally IdP<br/><small>Duende IdentityServer</small>"]
+            API["📊 Logistics API<br/><small>Protected Resources</small>"]
         end
     end
 
-    U -- "1. Accesses Portal" --> BP
-    BP -- "2. Needs Authentication, Redirects" --> IDP
-    U -- "3. Authenticates with IdP (Passwordless)" --> IDP
-    IDP -- "4. Issues Authorization Code" --> BP
-    BP -- "5. Exchanges Code for Tokens" --> IDP
-    IDP -- "6. Returns ID & Access Tokens" --> BP
-    BP -- "7. Makes Authenticated API Call with Access Token" --> API
-    API -- "8. Validates Token with IdP's Keys" --> IDP
-    API -- "9. Returns Protected GIS Data" --> BP
-    BP -- "10. Renders Data/Map for User" --> U
+    U -.->|"① Portal Access"| BP
+    BP -.->|"② Auth Required<br/>Redirect"| IDP
+    U -->|"③ Passwordless<br/>Authentication"| IDP
+    IDP -->|"④ Authorization<br/>Code"| BP
+    BP -->|"⑤ Token Exchange<br/>Request"| IDP
+    IDP -->|"⑥ ID & Access<br/>Tokens"| BP
+    BP -->|"⑦ API Call<br/>Bearer Token"| API
+    API -.->|"⑧ Token<br/>Validation"| IDP
+    API -->|"⑨ Protected<br/>GIS Data"| BP
+    BP -.->|"⑩ Render Map<br/>& Data"| U
 
-    style U fill:#dff,stroke:#333,stroke-width:2px
-    style BP fill:#cde,stroke:#333,stroke-width:2px
-    style IDP fill:#f9f,stroke:#333,stroke-width:2px
-    style API fill:#fcf,stroke:#333,stroke-width:2px
+    %% Modern color scheme with better contrast
+    classDef userStyle fill:#e8f4fd,stroke:#1e40af,stroke-width:3px,color:#1e40af
+    classDef portalStyle fill:#f0f9ff,stroke:#0369a1,stroke-width:2px,color:#0369a1
+    classDef idpStyle fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#d97706
+    classDef apiStyle fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#059669
+    classDef subgraphStyle fill:#f8fafc,stroke:#64748b,stroke-width:2px,color:#334155
+
+    class U userStyle
+    class BP portalStyle
+    class IDP idpStyle
+    class API apiStyle
+    class Client,SecureNet,Host subgraphStyle
 ```
 
 ### Component Roles
