@@ -3,155 +3,162 @@ using Duende.IdentityServer.Models;
 
 namespace Rally.Configuration
 {
+    /// <summary>
+    /// This static class contains the in-code configuration for the Duende IdentityServer instance.
+    /// It defines all the clients, API resources, and identity resources that the v1 platform supports.
+    /// This configuration is typically seeded into the database on application startup in a development environment.
+    /// In our v1 narrative, this configures the security for the "Logistics & Asset Tracking" platform.
+    /// </summary>
     public static class Config
     {
-        // Defines standard identity claims (scopes) like 'openid', 'profile', 'email'
+        /// <summary>
+        /// Defines the standard identity-related claims that clients can request.
+        /// These scopes control which user information is included in the ID Token and UserInfo endpoint response.
+        /// </summary>
         public static IEnumerable<IdentityResource> GetIdentityResources() =>
             new List<IdentityResource>
             {
-                new IdentityResources.OpenId(),    // Essential: Provides the 'sub' (subject ID) claim - THE unique user identifier
-                new IdentityResources.Profile(),   // Standard profile claims (name, family_name, website, etc.)
-                new IdentityResources.Email(),     // Standard 'email' and 'email_verified' claims
-                // new IdentityResources.Roles(), 
-                // Future: Could add custom IdentityResource for loyalty info 
-                // new IdentityResource("loyalty", "Loyalty Program Information", new[] { "loyalty_id", "loyalty_tier" })
+                // The 'openid' scope is mandatory for OpenID Connect compliance. It provides the 'sub' (subject ID)
+                // claim, which is the unique, stable identifier for a user.
+                new IdentityResources.OpenId(),
+                
+                // The 'profile' scope grants access to standard user profile claims like name, family_name, picture, etc.
+                new IdentityResources.Profile(),
+                
+                // The 'email' scope grants access to the 'email' and 'email_verified' claims.
+                new IdentityResources.Email(),
             };
 
-        // Defines API scopes (permissions for APIs). Leave empty for now .
+        /// <summary>
+        /// Defines the custom API scopes. These represent specific permissions for accessing protected resources (APIs).
+        /// In our v1 narrative, these are permissions for the "Logistics API".
+        /// </summary>
         public static IEnumerable<ApiScope> GetApiScopes() =>
             new List<ApiScope>
             {
-                
-                // --- NEW API SCOPE for Car Service API ---
+                // A scope for legacy or different API modules.
                 new ApiScope(
                     name: "carservice.api.access",
                     displayName: "Car Service API Access",
-                   
-                    // Optionally, define user claims to be included in access token when this scope is granted
-                    userClaims: new List<string> { "name", "email" } // Example claims
+                    userClaims: new List<string> { "name", "email" }
                 ),
+
+                // Defines a permission to read public, non-sensitive data from the Logistics API.
                 new ApiScope(
                     name: "automotiveservices.api.read_public",
-                    displayName: "Read public automotive service data"
+                    displayName: "Read public logistics and fleet data"
                 ),
+                
+                // Defines a higher-privilege permission for authenticated users (e.g., Dispatchers, Drivers)
+                // to interact with the Logistics API (e.g., update delivery status, view assigned routes).
                 new ApiScope(
                     name: "automotiveservices.api.user.interact",
-                    displayName: "Interact with automotive services as a user (e.g., bookings, profile)",
-                    userClaims: new List<string> { "user_id_custom_claim_if_needed" }
+                    displayName: "Interact with the Logistics Platform (e.g., update routes, view manifests)"
                     )
+            };
 
-                };
-
-            
-
-        // Defines API Resources (grouping API scopes). Leave empty for now.
+        /// <summary>
+        /// Defines the API Resources. An API Resource is a logical representation of a protected API.
+        /// It groups related API Scopes and defines the 'audience' (aud) claim for JWTs.
+        /// </summary>
         public static IEnumerable<ApiResource> GetApiResources() =>
             new List<ApiResource>
             {
-                
-                // --- NEW API RESOURCE for Car Service API ---
-                // new ApiResource(
-                //     name: "urn:carserviceapi", // This will be the AUDIENCE in the JWT
-                //     displayName: "Car Service API"
-
-                // )
-                // {
-                //     // Define which scopes this API resource allows/protects
-                //     Scopes = { "carservice.api.access" }, // Client must request this scope to get a token for this API
-                    
-                //     // If your API needs to introspect tokens or has its own secrets for other flows (not typical for simple resource server)
-                //     // ApiSecrets = { new Secret("car_service_api_secret".Sha256()) }, 
-                    
-                //     // Define user claims that should be included in the access token for this resource
-                //     // These are in addition to claims defined in the ApiScope itself
-                //     UserClaims = new List<string> { "role" } // Example: if API needs user's role
-                // },
+                // This represents our main "Logistics API". Any access token intended for this API
+                // must contain 'urn:automotiveservicesapi' in its 'aud' claim.
                 new ApiResource(
-                        name: "urn:automotiveservicesapi", // This will be the AUDIENCE for tokens
-                        displayName: "Automotive Services API (Main)",
-                        userClaims: new List<string> { "role", "name", "email" } // Claims to include in access token
-                    )
-                    {
-                        Scopes = { "automotiveservices.api.interact", "automotiveservices.api.read_public" } // Link to new scopes
-                    }
-                    };
+                    name: "urn:automotiveservicesapi",
+                    displayName: "Logistics API (Main)",
+                    // These claims will be automatically included in the access token when a client requests
+                    // a scope associated with this resource.
+                    userClaims: new List<string> { "role", "name", "email" }
+                )
+                {
+                    // These are the scopes that "belong" to this API. A client must request one or more
+                    // of these scopes to be granted an access token for this resource.
+                    Scopes = { "automotiveservices.api.user.interact", "automotiveservices.api.read_public" }
+                }
+            };
 
-        // Defines the client applications (Relying Parties)
-              public static IEnumerable<Client> GetClients() =>
+        /// <summary>
+        /// Defines the client applications that are allowed to request tokens from this Identity Provider.
+        /// </summary>
+        public static IEnumerable<Client> GetClients() =>
             new List<Client>
             {
-                // Client for CarService.Client (which is becoming CarService.Api and will also be consumed by Next.js)
-                // This client definition is primarily for its MVC parts and OIDC login flow.
-                // A *new* client definition might be needed for the Next.js app if its flow is different (e.g., pure SPA, different redirect URIs)
+                // This client represents the v1 server-side web application (e.g., a Blazor or MVC app).
+                // In our narrative, this is the "Logistics Management Portal" for internal use.
                 new Client
                 {
-                    ClientId = "car-service-client", // Current client ID
-                    ClientName = "Rally Car Service Web App", // Updated name
-                    ClientSecrets = { new Secret("secret_motors".Sha256()) },
+                    ClientId = "car-service-client",
+                    ClientName = "Logistics Management Portal (v1)",
+                    ClientSecrets = { new Secret("secret_motors".Sha256()) }, // This client is "confidential" as it can keep a secret.
 
-                    AllowedGrantTypes = GrantTypes.Code, // For interactive login
-                    RequirePkce = true,
+                    // This client uses the Authorization Code Flow, the standard for interactive web applications.
+                    AllowedGrantTypes = GrantTypes.Code,
+                    RequirePkce = true, // Enforces Proof Key for Code Exchange for added security.
 
-                    RedirectUris = { "https://localhost:7268/signin-oidc" }, // For MVC login
-                    PostLogoutRedirectUris = {
-                        "https://localhost:7268/signout-callback-oidc",
-                        "https://localhost:7268/"
-                    },
+                    // The URLs where the IdP is allowed to redirect the user after a successful login.
+                    RedirectUris = { "https://localhost:7268/signin-oidc" },
+                    // The URLs where the IdP is allowed to redirect the user after a successful logout.
+                    PostLogoutRedirectUris = { "https://localhost:7268/signout-callback-oidc", "https://localhost:7268/" },
 
+                    // Defines the complete list of scopes this client is allowed to request.
                     AllowedScopes = {
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
                         IdentityServerConstants.StandardScopes.Email,
-                        "automotiveservices.api.read_public", // New scope
+                        "automotiveservices.api.read_public",
                         "automotiveservices.api.user.interact"
-                        
-                        // IdentityServerConstants.StandardScopes.Roles, // If requesting roles
-                        //"carservice.api.access" // <<< ADDED: This client can now request access to the API
                     },
 
+                    // 'false' because this client does not need long-lived sessions via refresh tokens.
                     AllowOfflineAccess = false,
-                    RequireConsent = true, // Or false if you trust this first-party client
-                    AccessTokenLifetime = 3600, // 1 hour
-                    AlwaysIncludeUserClaimsInIdToken = true, 
-                    // If this client will be making direct API calls after user login using its access token:
-                    // AlwaysIncludeUserClaimsInIdToken = false, // Default, user claims usually in UserInfo or Access Token
-                    // UpdateAccessTokenClaimsOnRefresh = true, // If using refresh tokens
+                    // 'true' means the user will be prompted for consent the first time they use the application.
+                    RequireConsent = true,
+                    AccessTokenLifetime = 3600, // Access tokens are valid for 1 hour.
+                    // Ensures user claims are included in the ID Token for easier access by the client application.
+                    AlwaysIncludeUserClaimsInIdToken = true,
                 },
-
-new Client
-{
-    ClientId = "RALLY_MOTORS_GROUP", // Must match RALLY_IDP_CLIENT_ID in .env.local
-    ClientName = "Car Service Next.js Frontend",
-    ClientSecrets = { new Secret("RALLY_IDP_CLIENT_SECRET_FOR_NEXTJS_APP".Sha256()) }, // Must match RALLY_IDP_CLIENT_SECRET
-
-    AllowedGrantTypes = GrantTypes.Code, // Authorization Code Flow
-    RequirePkce = true, // PKCE is essential
-
-    // IMPORTANT: Callback URL used by next-auth
-    RedirectUris = { "http://localhost:3000/api/auth/callback/rallyidp" }, 
-    // For production, add your production callback URL: "https://your-app.com/api/auth/callback/rallyidp"
-
-    PostLogoutRedirectUris = { "http://localhost:3000/" }, // Where to redirect after IdP logout
-    // For production: "https://your-app.com/"
-
-    AllowedCorsOrigins = { "http://localhost:3000" }, // Important if JS makes direct calls to token/userinfo endpoints (next-auth usually handles this server-side)
-
-    AllowedScopes = {
-        IdentityServerConstants.StandardScopes.OpenId,
-        IdentityServerConstants.StandardScopes.Profile,
-        IdentityServerConstants.StandardScopes.Email,
-        IdentityServerConstants.StandardScopes.OfflineAccess,
-        "automotiveservices.api.read_public", // New scope
-        "automotiveservices.api.user.interact"
-    },
-    
-
-    AllowOfflineAccess = true, 
-    RequireConsent = false, 
-    AccessTokenLifetime = 3600, // 1 hour
-    AlwaysIncludeUserClaimsInIdToken = true, 
-}
                 
+                // This client represents a more modern Single-Page Application (SPA) client, like our Next.js app.
+                // In our narrative, this could be a "Mobile Driver App" or a "v2" portal frontend.
+                new Client
+                {
+                    ClientId = "RALLY_MOTORS_GROUP",
+                    ClientName = "Logistics Mobile/SPA Client",
+                    // Although this client has a secret defined, for a true public client using PKCE,
+                    // the secret is not used during the token exchange. This configuration supports both scenarios.
+                    ClientSecrets = { new Secret("RALLY_IDP_CLIENT_SECRET_FOR_NEXTJS_APP".Sha256()) },
+
+                    AllowedGrantTypes = GrantTypes.Code, // Also uses the Authorization Code Flow.
+                    RequirePkce = true, // PKCE is mandatory for public clients like SPAs.
+
+                    // The specific callback URL used by the next-auth library.
+                    RedirectUris = { "http://localhost:3000/api/auth/callback/rallyidp" }, 
+                    PostLogoutRedirectUris = { "http://localhost:3000/" },
+
+                    // Allows the JavaScript client to make direct requests to the IdP's discovery endpoint from the browser.
+                    AllowedCorsOrigins = { "http://localhost:3000" },
+
+                    // The list of scopes this modern client is allowed to request.
+                    AllowedScopes = {
+                        IdentityServerConstants.StandardScopes.OpenId,
+                        IdentityServerConstants.StandardScopes.Profile,
+                        IdentityServerConstants.StandardScopes.Email,
+                        // This client is allowed to request refresh tokens for long-lived sessions.
+                        IdentityServerConstants.StandardScopes.OfflineAccess, 
+                        "automotiveservices.api.read_public",
+                        "automotiveservices.api.user.interact"
+                    },
+
+                    // 'true' because this client needs refresh tokens to maintain a seamless user session without frequent logins.
+                    AllowOfflineAccess = true, 
+                    // 'false' could be used for a highly trusted, first-party application where the consent step is skipped.
+                    RequireConsent = false, 
+                    AccessTokenLifetime = 3600,
+                    AlwaysIncludeUserClaimsInIdToken = true, 
+                }
             };
     }
 }

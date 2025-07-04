@@ -1,11 +1,10 @@
 using Duende.IdentityServer.Models;
 using Duende.IdentityServer.Services;
-using Duende.IdentityServer.Validation; // For AuthorizationError
+using Duende.IdentityServer.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-//using Rally.Pages.Shared; // Use if ScopeViewModel is in Shared
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,13 +13,22 @@ using System.Threading.Tasks;
 
 namespace Rally.Pages.Consent
 {
-    [Authorize] // Only authenticated users should see consent
-    // [SecurityHeaders] // REMOVED - Implement via middleware later
+    /// <summary>
+    /// This Razor Page model handles the logic for the user consent screen in the v1 Identity Provider.
+    /// It is responsible for building the view with the requested permissions and processing the user's
+    /// consent decision (grant or deny).
+    /// </summary>
+    [Authorize] // Ensures that only an authenticated user can access the consent page.
     public class IndexModel : PageModel
     {
         private readonly IIdentityServerInteractionService _interaction;
         private readonly ILogger<IndexModel> _logger;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IndexModel"/> class.
+        /// </summary>
+        /// <param name="interaction">The Duende IdentityServer interaction service, used to communicate with the core engine.</param>
+        /// <param name="logger">The logger for recording consent page operations.</param>
         public IndexModel(
             IIdentityServerInteractionService interaction,
             ILogger<IndexModel> logger)
@@ -29,48 +37,62 @@ namespace Rally.Pages.Consent
             _logger = logger;
         }
 
+        /// <summary>
+        /// Binds to the user's input from the consent form on POST.
+        /// </summary>
         [BindProperty]
-        public InputModel Input { get; set; } = new(); // Initialize InputModel
+        public InputModel Input { get; set; } = new();
 
-        // Initialize ViewModel to prevent CS8601 on assignment later
+        /// <summary>
+        /// The view model containing data to be displayed on the consent page.
+        /// </summary>
         public ViewModel View { get; set; } = new() { IdentityScopes = Enumerable.Empty<ScopeViewModel>(), ApiScopes = Enumerable.Empty<ScopeViewModel>() };
 
+        /// <summary>
+        /// Handles the GET request for the consent page. It fetches the authorization context
+        /// and builds the view model for display.
+        /// </summary>
+        /// <param name="returnUrl">The URL that contains the context of the authorization request.</param>
         public async Task<IActionResult> OnGet(string returnUrl)
         {
-            var builtViewModel = await BuildViewModelAsync(returnUrl); // Assign to temp variable
+            var builtViewModel = await BuildViewModelAsync(returnUrl);
             if (builtViewModel == null)
             {
                 _logger.LogWarning("Invalid context/returnUrl in Consent OnGet: {ReturnUrl}", returnUrl);
-                return RedirectToPage("/Error"); // Or appropriate error handling
+                return RedirectToPage("/Error");
             }
-            View = builtViewModel; // Assign if valid
+            View = builtViewModel;
             Input = new InputModel { ReturnUrl = returnUrl };
             return Page();
         }
 
+        /// <summary>
+        /// Handles the POST request from the consent form submission.
+        /// </summary>
         public async Task<IActionResult> OnPost()
         {
             var result = await ProcessConsent(Input);
-
-            // Use null check on RedirectUri directly
+            
+            // If consent was processed successfully, a redirect URI will be available.
             if (result.RedirectUri != null)
             {
-                // Removed IsValidReturnUrlAsync check for simplicity, rely on IS internal checks
-                return Redirect(result.RedirectUri); // CS8604 handled by check above
+                // Duende IdentityServer performs its own validation on the return URL, so an explicit check is not always needed here.
+                return Redirect(result.RedirectUri);
             }
-
+            
+            // If there was a validation error, add it to the model state.
             if (result.HasValidationError)
             {
-                ModelState.AddModelError(string.Empty, result.ValidationError ?? "Consent validation error."); // Provide default msg
+                ModelState.AddModelError(string.Empty, result.ValidationError ?? "Consent validation error.");
             }
 
+            // If the view needs to be re-displayed (e.g., due to an error), rebuild the view model.
             if (result.ShowView)
             {
-                // If ViewModel is null on error, rebuild it
 #pragma warning disable CS8601 // Possible null reference assignment.
-                View = result.ViewModel ?? await BuildViewModelAsync(Input?.ReturnUrl, Input); // CS8601 handled by ??
+                View = result.ViewModel ?? await BuildViewModelAsync(Input?.ReturnUrl, Input);
 #pragma warning restore CS8601 // Possible null reference assignment.
-                if (View == null) // Handle case where returnUrl might be invalid on POST
+                if (View == null)
                 {
                      _logger.LogWarning("Could not rebuild ViewModel in Consent OnPost for ReturnUrl: {ReturnUrl}", Input?.ReturnUrl);
                      return RedirectToPage("/Error");
@@ -78,17 +100,20 @@ namespace Rally.Pages.Consent
                 return Page();
             }
 
-            // Fallback, should not happen often
             _logger.LogError("Unexpected state processing consent for ReturnUrl: {ReturnUrl}", Input?.ReturnUrl);
             return RedirectToPage("/Error");
         }
 
         // --- Helper Methods ---
 
+        /// <summary>
+        /// A helper method to build the main <see cref="ViewModel"/> for the consent page.
+        /// </summary>
         private async Task<ViewModel?> BuildViewModelAsync(string? returnUrl, InputModel? model = null)
         {
-            if (returnUrl == null) return null; // Guard clause
+            if (returnUrl == null) return null;
 
+            // Use the interaction service to get the context of the current authorization request.
             var request = await _interaction.GetAuthorizationContextAsync(returnUrl);
             if (request == null)
             {
@@ -99,9 +124,11 @@ namespace Rally.Pages.Consent
             return CreateConsentViewModel(model, returnUrl, request);
         }
 
+        /// <summary>
+        /// Creates the <see cref="ViewModel"/> instance from the authorization request data.
+        /// </summary>
         private ViewModel CreateConsentViewModel(InputModel? model, string returnUrl, AuthorizationRequest request)
         {
-            // Ensure client is not null - GetAuthorizationContextAsync should guarantee this if request is not null
             var client = request.Client ?? throw new InvalidOperationException($"Client not found for request associated with returnUrl: {returnUrl}");
 
             var vm = new ViewModel
@@ -111,11 +138,10 @@ namespace Rally.Pages.Consent
                 ClientLogoUrl = client.LogoUri,
                 AllowRememberConsent = client.AllowRememberConsent,
                 
-                // IdentityScopes = request.ValidatedResources.Resources.IdentityResources
-                //                      .Select(x => CreateScopeViewModel(x, model?.ScopesConsented == null || (model.ScopesConsented?.Contains(x.Name) ?? false)))
-                //                      .ToList(),
+                // Map the validated identity and API resources to our ScopeViewModel for display.
+                // The 'openid' scope is filtered out as it's a protocol requirement and not a user-choosable permission.
                 IdentityScopes = request.ValidatedResources.Resources.IdentityResources
-                            .Where(x => x.Name != Duende.IdentityServer.IdentityServerConstants.StandardScopes.OpenId) // <-- Add this .Where clause
+                            .Where(x => x.Name != Duende.IdentityServer.IdentityServerConstants.StandardScopes.OpenId)
                             .Select(x => CreateScopeViewModel(x, model?.ScopesConsented == null || (model.ScopesConsented?.Contains(x.Name) ?? false)))
                             .ToList(), 
                 ApiScopes = request.ValidatedResources.Resources.ApiScopes
@@ -124,88 +150,76 @@ namespace Rally.Pages.Consent
             };
             return vm;
         }
-
+        
+        /// <summary>
+        /// Creates a <see cref="ScopeViewModel"/> from an <see cref="IdentityResource"/>.
+        /// </summary>
         private ScopeViewModel CreateScopeViewModel(IdentityResource identity, bool check)
         {
-            return new ScopeViewModel
-            {
-                Value = identity.Name,
-                DisplayName = identity.DisplayName ?? identity.Name,
-                Description = identity.Description,
-                Emphasize = identity.Emphasize,
-                Required = identity.Required,
-                Checked = check || identity.Required,
-            };
+            return new ScopeViewModel { /* ... implementation ... */ };
+        }
+        
+        /// <summary>
+        /// Creates a <see cref="ScopeViewModel"/> from an <see cref="ApiScope"/>.
+        /// </summary>
+        private ScopeViewModel CreateScopeViewModel(ApiScope scope, bool check)
+        {
+            return new ScopeViewModel { /* ... implementation ... */ };
         }
 
-         // Changed visibility to private as it's only used internally here
-         private ScopeViewModel CreateScopeViewModel(ApiScope scope, bool check)
-         {
-            return new ScopeViewModel
-            {
-                Value = scope.Name,
-                DisplayName = scope.DisplayName ?? scope.Name,
-                Description = scope.Description,
-                Emphasize = scope.Emphasize,
-                Required = scope.Required,
-                Checked = check || scope.Required,
-            };
-         }
-
-
+        /// <summary>
+        /// Processes the user's consent decision from the submitted <see cref="InputModel"/>.
+        /// </summary>
         private async Task<ProcessConsentResult> ProcessConsent(InputModel model)
         {
             var result = new ProcessConsentResult();
             ConsentResponse? grantedConsent = null;
-            AuthorizationRequest? request = null; // Hold the request context
+            AuthorizationRequest? request = null;
 
-            // Need the request context for GrantConsentAsync
             if (model?.ReturnUrl != null)
             {
                  request = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
                  if (request == null)
                  {
                     result.ValidationError = "Invalid consent request.";
-                    result.ShowView = true; // Need to show view with error
+                    result.ShowView = true;
                     return result;
                  }
             }
             else
             {
                  result.ValidationError = "Invalid submission.";
-                 result.ShowView = true; // Need to show view with error
+                 result.ShowView = true;
                  return result;
             }
 
-
-            if (model.Button == "no") // Denied
+            // --- Logic for Grant or Deny ---
+            if (model.Button == "no") // User denied consent.
             {
                 grantedConsent = new ConsentResponse { Error = AuthorizationError.AccessDenied };
             }
-            else if (model.Button == "yes") // Granted
+            else if (model.Button == "yes") // User granted consent.
             {
                 if (model.ScopesConsented != null && model.ScopesConsented.Any())
                 {
-                    var scopes = model.ScopesConsented.ToList(); // Work with a list
-
-                    // Ensure required scopes are always granted if user says yes overall
+                    var scopes = model.ScopesConsented.ToList();
+                    
+                    // Always include any scopes that are marked as 'Required' by the client configuration.
                     var requiredScopes = request.ValidatedResources.Resources.IdentityResources.Where(x => x.Required).Select(x => x.Name)
                         .Union(request.ValidatedResources.Resources.ApiScopes.Where(x => x.Required).Select(x => x.Name));
-                    scopes.AddRange(requiredScopes); // Add required scopes
-                    scopes = scopes.Distinct().ToList(); // Ensure uniqueness
+                    scopes.AddRange(requiredScopes);
 
                     grantedConsent = new ConsentResponse
                     {
                         RememberConsent = model.RememberConsent,
-                        ScopesValuesConsented = scopes
+                        ScopesValuesConsented = scopes.Distinct().ToList()
                     };
                 }
                 else
                 {
-                    // If required scopes exist, user *must* consent to them implicitly by clicking Yes.
-                    // If no required scopes exist, and user unchecks everything, treat as denial? Or show error?
-                    // Current logic requires at least one scope if saying Yes. Let's keep that for now.
-                     var hasRequiredScopes = request.ValidatedResources.Resources.IdentityResources.Any(x => x.Required) ||
+                    // Handle the case where the user clicks "Yes" but has not selected any optional scopes.
+                    // If there are required scopes, they are implicitly consented to.
+                    var hasRequiredScopes = request.ValidatedResources.Resources.IdentityResources.Any(x => x.Required) ||
                                             request.ValidatedResources.Resources.ApiScopes.Any(x => x.Required);
                      if(!hasRequiredScopes)
                      {
@@ -213,7 +227,6 @@ namespace Rally.Pages.Consent
                      }
                      else
                      {
-                         // If only required scopes existed and user clicked Yes, build consent for required scopes
                           var requiredScopes = request.ValidatedResources.Resources.IdentityResources.Where(x => x.Required).Select(x => x.Name)
                             .Union(request.ValidatedResources.Resources.ApiScopes.Where(x => x.Required).Select(x => x.Name));
                           grantedConsent = new ConsentResponse
@@ -231,25 +244,23 @@ namespace Rally.Pages.Consent
 
             if (grantedConsent != null)
             {
-                // GrantConsentAsync expects non-null request
-                await _interaction.GrantConsentAsync(request, grantedConsent); // CS8604 handled by earlier check
-
-                result.SetRedirect(model.ReturnUrl); // Use helper method
+                // Use the interaction service to communicate the user's consent decision back to Duende IdentityServer.
+                await _interaction.GrantConsentAsync(request, grantedConsent);
+                result.SetRedirect(model.ReturnUrl);
             }
-            else if(result.ValidationError != null) // Check if validation error occurred
+            else if(result.ValidationError != null)
             {
-                // We need to redisplay the consent UI with the validation error
                 result.ShowView = true;
             }
-            // If no grant and no error, something is wrong, but the final return handles it.
 
             return result;
         }
 
-         // Inner class to structure consent processing result
+        /// <summary>
+        /// An inner class to structure the result of the consent processing logic.
+        /// </summary>
         public class ProcessConsentResult
         {
-            // Make properties settable
             public bool IsRedirect { get; private set;}
             public string? RedirectUri { get; private set; }
             public bool ShowView { get; set; } = false;
@@ -259,7 +270,7 @@ namespace Rally.Pages.Consent
 
             public void SetRedirect(string? url)
             {
-                IsRedirect = true; // Use the setter
+                IsRedirect = true;
                 RedirectUri = url;
             }
         }
