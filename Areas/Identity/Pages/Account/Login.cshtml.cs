@@ -1,4 +1,3 @@
-// File: Rally/Areas/Identity/Pages/Account/Login.cshtml.cs
 #nullable disable
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
@@ -7,16 +6,25 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Rally.Models;
-using Microsoft.Extensions.Logging; // Ensure logger is used
+using Microsoft.Extensions.Logging;
 
 namespace Rally.Areas.Identity.Pages.Account
 {
+    /// <summary>
+    /// This Razor Page model handles the v1 Identity Provider's **passwordless login flow**.
+    /// Instead of collecting a password, it collects an email address and initiates a one-time
+    /// code verification process. This page serves as the entry point for both signing in
+    /// an existing user and registering a new user.
+    /// </summary>
     public class LoginModel : PageModel
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailSender _emailSender;
         private readonly ILogger<LoginModel> _logger;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LoginModel"/> class.
+        /// </summary>
         public LoginModel(
             UserManager<ApplicationUser> userManager,
             IEmailSender emailSender,
@@ -27,37 +35,61 @@ namespace Rally.Areas.Identity.Pages.Account
             _logger = logger;
         }
 
+        /// <summary>
+        /// The model that binds to the login form's input field.
+        /// </summary>
         [BindProperty]
         public InputModel Input { get; set; }
 
+        /// <summary>
+        /// The URL to redirect to after a successful login. This is passed from the
+        /// Duende IdentityServer middleware when authentication is required.
+        /// </summary>
         public string ReturnUrl { get; set; }
 
+        /// <summary>
+        /// Defines the data structure for the passwordless login form input.
+        /// </summary>
         public class InputModel
         {
+            /// <summary>
+            /// The user's email address, used as their primary identifier.
+            /// </summary>
             [Required]
             [EmailAddress]
             public string Email { get; set; }
         }
 
+        /// <summary>
+        /// Handles the GET request for the login page.
+        /// </summary>
+        /// <param name="returnUrl">The optional return URL.</param>
         public void OnGet(string returnUrl = null)
         {
             ReturnUrl = returnUrl;
         }
 
+        /// <summary>
+        /// Handles the POST request when a user submits their email address to start the passwordless flow.
+        /// </summary>
+        /// <param name="returnUrl">The optional return URL.</param>
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             ReturnUrl = returnUrl;
             if (ModelState.IsValid)
             {
                 var user = await _userManager.FindByEmailAsync(Input.Email);
-                string codePurpose = "PasswordlessLogin"; // Purpose for this flow
+                string codePurpose = "PasswordlessLogin"; // A purpose string to isolate these tokens from others (e.g., password reset).
 
-                if (user != null) // User exists
+                // --- Case 1: The user already exists in the system. ---
+                if (user != null)
                 {
                     _logger.LogInformation("Passwordless login initiated for existing email: {Email}", Input.Email);
+                    // Generate a time-sensitive, single-use token for this user.
                     var code = await _userManager.GenerateUserTokenAsync(user, TokenOptions.DefaultPhoneProvider, codePurpose);
                     try
                     {
+                        // Send the generated code to the user's email address.
                         await _emailSender.SendEmailAsync(Input.Email,
                             "Your Rally Login Code",
                             $"Enter this code to log in to Rally: <h2>{code}</h2>");
@@ -65,58 +97,28 @@ namespace Rally.Areas.Identity.Pages.Account
                     }
                     catch(Exception ex)
                     {
+                        // Log the failure but do not reveal to the potential attacker that the email sending failed.
+                        // The user will be redirected to the verification page regardless.
                         _logger.LogError(ex, "Failed to send login code to existing user {Email}", Input.Email);
-                        // Don't reveal failure, still redirect
                     }
                 }
-                else // User does NOT exist - this is a new registration attempt
+                // --- Case 2: The email address does not exist. This is a new user registration attempt. ---
+                else
                 {
                     _logger.LogInformation("Passwordless registration initiated for new email: {Email}", Input.Email);
-                    // We will send a generic "enter this code" email.
-                    // The VerifyLoginCode page will create the user if this code is then "verified"
-                    // (which is a conceptual verification for a new user, as the code wasn't tied to a specific user yet).
-                    // To make this truly work, we need a code that can be verified without a pre-existing user,
-                    // or a way for VerifyLoginCodeModel to know this code was for a new user.
-
-                    // For a simple combined flow:
-                    // Generate a placeholder/generic code for the email step for new users if the token provider allows.
-                    // However, GenerateUserTokenAsync REQUIRES a user.
-                    // So, if user is null, we can't generate a user-specific code here.
-                    // The email sent will invite them to enter a code, and VerifyLoginCodeModel will handle creation.
-
-                    // A simpler approach is to send a DIFFERENT email for new users,
-                    // asking them to proceed to create an account where a code will be presented/sent.
-                    // Or, for passwordless, the VerifyLoginCode will create the user.
-                    // Let's assume VerifyLoginCode will create if needed, and the code sent is for *that email address*.
-
-                    // We will simulate sending a code, but VerifyLoginCodeModel does the heavy lifting for new users.
-                    // For the email, we can still try to send *a* code concept, but it won't be verifiable in the same way
-                    // until the user is created in VerifyLoginCode.
-                    // Let's send an email just saying to go to the verify page.
-                    try
-                    {
-                        // In a more advanced scenario, you might generate a temporary, non-user-specific code
-                        // or a different type of registration token.
-                        // For now, we are relying on VerifyLoginCode to do the "does this look like a new user registration attempt?" logic.
-                        // A better approach is to generate a code for a NEW user in VerifyLoginCode AFTER creation.
-
-                        // Let's modify VerifyLoginCode to generate a code if user is new.
-                        // This page (LoginModel) will just redirect to VerifyLoginCode with the email.
-                        _logger.LogInformation("New email {Email} entered. Redirecting to VerifyLoginCode for potential registration.", Input.Email);
-
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to process initiation for new user {Email}", Input.Email);
-                    }
+                    // For a new user, we cannot generate a user-specific token yet because the user record
+                    // doesn't exist. Instead of sending an email here, we will redirect them to the
+                    // verification page. The logic on that page will handle creating the new user account
+                    // and then proceeding with a confirmation step.
                 }
 
-                // ALWAYS redirect to VerifyLoginCode, pass the email.
-                // VerifyLoginCode will handle:
-                // 1. If user exists: Send/Verify code for login.
-                // 2. If user doesn't exist: Create user, send/verify *their first confirmation code*.
+                // Regardless of whether the user exists or not, we always redirect to the verification page.
+                // This prevents account enumeration attacks, as the UI flow is identical in both cases.
+                // The `VerifyLoginCode` page is now responsible for handling the next step.
                 return RedirectToPage("./VerifyLoginCode", new { email = Input.Email, returnUrl = ReturnUrl });
             }
+
+            // If model state is invalid, re-display the form.
             return Page();
         }
     }
